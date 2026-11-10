@@ -31,6 +31,10 @@ Sections and their effects:
 
 Throughout: headings rise word by word from a mask, photos wipe in and drift, a custom pointer, magnetic buttons, a header that reads on any colour and steps aside on the way down, a progress line at the right edge, live Kolkata time. With reduced motion everything is shown still and the loader is skipped.
 
+## Checked
+
+Lint and a production build pass (one static page). The page was checked at 1440 × 900, 1366 × 633 (a short laptop), 820 × 1100 (tablet) and 375 × 812 (phone): no sideways scroll, and every pinned section and the footer fit the screen. Run `pnpm build` only while `pnpm dev` is stopped, or restart dev afterwards.
+
 ## Before showing or launching: to confirm with the hotel
 
 - **Photos** are from the hotel's public Booking.com listing, for this mock-up only. Get the hotel's own files and permission before anything goes live. The entrance photo is low resolution.

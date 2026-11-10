@@ -153,19 +153,28 @@ export default function Home() {
         },
       });
       intro
-        .to(count, {
+        .fromTo(
+          "[data-pre-word]",
+          { autoAlpha: 0, y: 18 },
+          { autoAlpha: 1, y: 0, duration: 0.6, stagger: 0.08, ease: "power3.out" },
+        )
+        .to(
+          count,
+          {
           v: 100,
-          duration: 1.5,
+          duration: 1.2,
           ease: "power2.inOut",
           onUpdate: () => {
             const n = q("[data-count]");
             if (n) n.textContent = String(Math.round(count.v)).padStart(3, "0");
           },
-        })
-        .to("[data-pre-bar]", { scaleY: 1, duration: 1.5, ease: "power2.inOut" }, 0)
-        .to("[data-pre-ui]", { autoAlpha: 0, duration: 0.35 }, ">-0.1")
-        .to("[data-pre-l]", { xPercent: -100, duration: 1.1, ease: "power4.inOut" }, ">")
-        .to("[data-pre-r]", { xPercent: 100, duration: 1.1, ease: "power4.inOut" }, "<")
+          },
+          0.1,
+        )
+        .to("[data-pre-bar]", { scaleY: 1, duration: 1.2, ease: "power2.inOut" }, 0.1)
+        .to("[data-pre-ui]", { autoAlpha: 0, duration: 0.3 }, ">-0.05")
+        .to("[data-pre-l]", { xPercent: -100, duration: 1, ease: "power4.inOut" }, ">-0.1")
+        .to("[data-pre-r]", { xPercent: 100, duration: 1, ease: "power4.inOut" }, "<")
         .to("[data-pre-bar]", { autoAlpha: 0, duration: 0.3 }, "<")
         .set("[data-pre]", { display: "none" })
         // The name arrives letter by letter, and its bar grows between the halves.
@@ -234,10 +243,9 @@ export default function Home() {
       // The small photographs open inside the line as it is read.
       gsap.fromTo(
         "[data-pill]",
-        { width: 0, marginInline: 0 },
+        { clipPath: "inset(0% 50% 0% 50% round 999px)" },
         {
-          width: "1.7em",
-          marginInline: "0.08em",
+          clipPath: "inset(0% 0% 0% 0% round 999px)",
           stagger: 0.25,
           ease: "power2.out",
           scrollTrigger: { trigger: "[data-read]", start: "top 70%", end: "bottom 55%", scrub: true },
@@ -292,7 +300,12 @@ export default function Home() {
       const clockEl = q("[data-day-clock]");
       const dots = qa("[data-day-dot]");
       // Each moment rests on its own hour; the clock runs between them.
-      const knots = [[0, moments[0].hour - 1], ...moments.map((m, i) => [(i + 0.45) / n, m.hour]), [1, 23.98]];
+      const total = n - 1 + 0.7; // the timeline's length, in moments
+      const knots = [[0, moments[0].hour - 0.5]];
+      moments.forEach((m, i) => {
+        knots.push([Math.max(0.03, (i - 0.05) / total), m.hour], [(i + 0.6) / total, m.hour + 0.4]);
+      });
+      knots.push([1, Math.min(23.98, moments[n - 1].hour + 0.9)]);
       const hourAt = (p) => {
         for (let i = 1; i < knots.length; i += 1) {
           if (p <= knots[i][0]) {
@@ -314,7 +327,10 @@ export default function Home() {
         sun.setAttribute("cx", (200 + 180 * Math.cos(a)).toFixed(1));
         sun.setAttribute("cy", (200 - 180 * Math.sin(a)).toFixed(1));
         dayEl.dataset.night = night ? "true" : "false";
-        const idx = Math.min(n - 1, Math.floor(p * n));
+        let idx = 0;
+        moments.forEach((m, i) => {
+          if (i && p >= (i - 0.18) / total) idx = i;
+        });
         dots.forEach((d, i) => {
           d.dataset.on = i === idx ? "true" : i < idx ? "done" : "false";
         });
@@ -338,7 +354,7 @@ export default function Home() {
         if (i === 0) return;
         const at = i - 0.3;
         dayTl
-          .to(dayEl, { backgroundColor: m.tone.bg, color: m.tone.fg, duration: 0.5 }, at)
+          .to(dayEl, { backgroundColor: m.tone.bg, color: m.tone.fg, duration: 0.3 }, at + 0.1)
           .to(`[data-moment="${i - 1}"]`, { autoAlpha: 0, yPercent: -30, duration: 0.25, ease: "power2.in" }, at)
           .fromTo(
             `[data-moment="${i}"]`,
@@ -366,7 +382,11 @@ export default function Home() {
           gsap.to(card.querySelector("[data-card-in]"), {
             scale: 0.93,
             yPercent: -2,
-            filter: "brightness(0.6)",
+            ease: "none",
+            scrollTrigger: { trigger: list[i + 1], start: "top bottom", end: "top 12%", scrub: true },
+          });
+          gsap.to(card.querySelector("[data-card-dim]"), {
+            opacity: 0.45,
             ease: "none",
             scrollTrigger: { trigger: list[i + 1], start: "top bottom", end: "top 12%", scrub: true },
           });
@@ -467,10 +487,11 @@ export default function Home() {
           trigger: zone,
           start: "top 55%",
           end: "bottom 55%",
-          onToggle: (self) => {
-            if (self.isActive) el.dataset.theme = zone.dataset.zone;
-            else if (el.dataset.theme === zone.dataset.zone) el.dataset.theme = "paper";
-          },
+          // The dark zone is the page's last section, so it stays dark once passed
+          // (the footer is uncovered beneath it) and only lifts on the way back up.
+          onEnter: () => (el.dataset.theme = zone.dataset.zone),
+          onEnterBack: () => (el.dataset.theme = zone.dataset.zone),
+          onLeaveBack: () => (el.dataset.theme = "paper"),
         });
       });
 
@@ -541,28 +562,6 @@ export default function Home() {
         });
       });
 
-      // Tiles tip towards the pointer.
-      qa("[data-tilt]").forEach((node) => {
-        const tip = (e) => {
-          const r = node.getBoundingClientRect();
-          const px = (e.clientX - r.left) / r.width - 0.5;
-          const py = (e.clientY - r.top) / r.height - 0.5;
-          gsap.to(node, {
-            rotateY: px * 7,
-            rotateX: -py * 7,
-            transformPerspective: 900,
-            duration: 0.5,
-            ease: "power2.out",
-          });
-        };
-        const flat = () => gsap.to(node, { rotateX: 0, rotateY: 0, duration: 0.8, ease: "power3.out" });
-        node.addEventListener("mousemove", tip);
-        node.addEventListener("mouseleave", flat);
-        cleanups.push(() => {
-          node.removeEventListener("mousemove", tip);
-          node.removeEventListener("mouseleave", flat);
-        });
-      });
     }
 
     const onLoad = () => ScrollTrigger.refresh();
@@ -607,13 +606,17 @@ export default function Home() {
     <div ref={root} className={s.root} data-theme="paper">
       {/* ---------- Loader ---------- */}
       <div className={s.pre} data-pre aria-hidden="true">
-        <i className={s.preL} data-pre-l />
-        <i className={s.preR} data-pre-r />
-        <i className={s.preBar} data-pre-bar />
-        <div className={s.preUi} data-pre-ui>
-          <Wordmark />
-          <span data-count>000</span>
+        {/* The two halves carry the name; the line between them is its bar. */}
+        <div className={s.preL} data-pre-l>
+          <span data-pre-word>metro</span>
         </div>
+        <div className={s.preR} data-pre-r>
+          <span data-pre-word>pole</span>
+          <small className={s.preCount} data-pre-ui>
+            <span data-count>000</span>
+          </small>
+        </div>
+        <i className={s.preBar} data-pre-bar />
       </div>
       <noscript>
         <style>{"[data-pre]{display:none}"}</style>
@@ -785,7 +788,7 @@ export default function Home() {
             <div className={s.viewer} data-cursor="Scroll">
               {rooms.map((r, i) => (
                 <div key={r.id} className={s.layer} data-layer={i}>
-                  <img src={r.src} alt={`${r.name} room at Metropole`} loading={i ? "lazy" : "eager"} decoding="async" />
+                  <img src={r.src} alt={`${r.name} room at Metropole`} decoding="async" />
                 </div>
               ))}
               <i className={s.viewerShade} aria-hidden="true" />
@@ -915,6 +918,7 @@ export default function Home() {
           {cards.map((c, i) => (
             <article key={c.id} id={c.id} className={s.card} data-card data-tone={c.tone}>
               <div className={s.cardIn} data-card-in>
+                <i className={s.cardDim} data-card-dim aria-hidden="true" />
                 <div className={s.cardText}>
                   <p className={s.label}>
                     <span>(0{i + 4})</span>

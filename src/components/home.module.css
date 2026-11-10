@@ -149,15 +149,28 @@
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 50.1%;
+  display: flex;
+  align-items: center;
+  width: calc(50% + 0.5px);
   background: #151311;
+  font-family: var(--font-mark), sans-serif;
+  font-weight: 300;
+  font-size: clamp(1.9rem, 3.4vw, 3.2rem);
+  line-height: 1;
+  letter-spacing: 0.02em;
+  will-change: transform;
 }
 .preL {
   left: 0;
+  justify-content: flex-end;
+  padding-right: 0.42em;
 }
 .preR {
   right: 0;
+  justify-content: flex-start;
+  padding-left: 0.42em;
 }
+/* The line between the halves: it grows with the count. */
 .preBar {
   position: absolute;
   left: 50%;
@@ -169,21 +182,14 @@
   transform: scaleY(0);
   transform-origin: top;
 }
-.preUi {
+.preCount {
   position: absolute;
-  inset: 0;
-  display: grid;
-  place-content: center;
-  justify-items: center;
-  gap: 18px;
-  font-size: 2.2rem;
-}
-.preUi > span:last-child {
-  font-family: var(--font-text), sans-serif;
-  font-size: 0.8rem;
-  letter-spacing: 0.3em;
+  right: var(--gutter);
+  bottom: clamp(18px, 4vh, 36px);
+  font-size: clamp(2.6rem, 6vw, 6rem);
   font-variant-numeric: tabular-nums;
   color: var(--gold);
+  opacity: 0.85;
 }
 
 /* ---------- Pointer, page progress, grain ---------- */
@@ -1112,6 +1118,7 @@
   margin-bottom: 34px;
 }
 .cardIn {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
   height: 100%;
@@ -1171,11 +1178,6 @@
   top: calc(var(--bar-h) + 28px);
   display: grid;
   gap: 20px;
-}
-.aroundPhoto {
-  aspect-ratio: 3 / 2;
-  max-width: 480px;
-  margin-top: 16px;
 }
 .places li {
   display: grid;
@@ -1240,8 +1242,8 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: clamp(20px, 3vh, 40px);
-  padding-top: calc(var(--bar-h) + clamp(16px, 4vh, 50px));
+  gap: clamp(14px, 2.4svh, 40px);
+  padding-top: calc(var(--bar-h) + clamp(8px, 3svh, 50px));
 }
 .footTop {
   display: flex;
@@ -1261,13 +1263,13 @@
   place-content: center;
   justify-items: center;
   gap: 6px;
-  width: clamp(190px, 19vw, 270px);
+  width: clamp(150px, min(19vw, 25svh), 270px);
   aspect-ratio: 1;
   border-radius: 50%;
   background: var(--cream);
   color: var(--oxblood);
   font-family: var(--font-display), serif;
-  font-size: clamp(1.6rem, 2.2vw, 2.3rem);
+  font-size: clamp(1.25rem, min(2.2vw, 3.2svh), 2.3rem);
   line-height: 1;
   transition:
     background 0.3s,
@@ -1317,7 +1319,7 @@
   overflow: hidden;
   font-family: var(--font-mark), sans-serif;
   font-weight: 300;
-  font-size: clamp(3.6rem, min(19.5vw, 38svh), 24rem);
+  font-size: clamp(3.6rem, min(19.5vw, 28svh), 24rem);
   line-height: 1;
   letter-spacing: 0.01em;
   padding-bottom: 0.06em;
@@ -1437,47 +1439,6 @@
     gap: 20px;
   }
 
-  .rooms {
-    --room-h: 62vw;
-    min-height: 0;
-    padding-block: 70px;
-  }
-  .roomsHead {
-    display: grid;
-    gap: 18px;
-  }
-  .count {
-    justify-self: start;
-    white-space: normal;
-  }
-  .room {
-    width: 82vw;
-  }
-  .roomPhoto img {
-    width: 100%;
-    margin-left: 0;
-  }
-  .roomText {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 8px;
-  }
-  .every {
-    width: 76vw;
-    height: auto;
-    gap: 24px;
-  }
-
-  .bento {
-    --row: 44vw;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .tA,
-  .tG {
-    grid-column: 1 / -1;
-  }
-  .tA {
-    grid-row: span 2;
-  }
 
   .card {
     position: static;
@@ -1558,7 +1519,7 @@
 /* ---------- Around: a radar of distances ---------- */
 .radar {
   position: relative;
-  width: min(100%, 430px);
+  width: min(100%, 430px, 36svh);
   margin-top: 6px;
 }
 .radar svg {
@@ -1639,5 +1600,28 @@
   .sweep {
     animation: none;
     opacity: 0;
+  }
+}
+
+/* ---------- Loader words wait hidden for the script ---------- */
+.preL > span,
+.preR > span {
+  visibility: hidden;
+}
+
+/* ---------- Stacked card: the dimming layer ---------- */
+.cardDim {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: #151311;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Very short, wide screens: the footer simply follows the page. */
+@media (max-height: 560px) and (min-width: 900px) {
+  .footer {
+    position: relative;
   }
 }
